@@ -10,41 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingSection = document.getElementById('loadingSection');
     const resultSection = document.getElementById('resultSection');
 
-    // API Key Elements
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const saveKeyBtn = document.getElementById('saveKeyBtn');
-    const apiKeySection = document.getElementById('apiKeySection');
+
 
     let currentFile = null;
-    let genAI = null;
-
-    // Load saved API Key
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) {
-        apiKeyInput.value = savedKey;
-        initializeGenAI(savedKey);
-    }
-
-    // Save API Key
-    saveKeyBtn.addEventListener('click', () => {
-        const key = apiKeyInput.value.trim();
-        if (key) {
-            localStorage.setItem('gemini_api_key', key);
-            initializeGenAI(key);
-            alert('API Key saved!');
-        } else {
-            alert('Please enter a valid API Key.');
-        }
-    });
-
-    function initializeGenAI(key) {
-        try {
-            genAI = new GoogleGenerativeAI(key);
-        } catch (error) {
-            console.error("Error initializing GenAI:", error);
-            alert("Invalid API Key format.");
-        }
-    }
+    // Hardcoded API Key
+    const genAI = new GoogleGenerativeAI("AIzaSyBkEKxPfKv79t4zBBVyofT7h0ip0RzdJXM");
 
     // Drag and Drop Events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -134,11 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Analyze button
     analyzeBtn.addEventListener('click', async () => {
         if (!currentFile) return;
-        if (!genAI) {
-            alert('Please enter and save your API Key first.');
-            apiKeyInput.focus();
-            return;
-        }
 
         loadingSection.classList.remove('hidden');
         resultSection.classList.add('hidden');
