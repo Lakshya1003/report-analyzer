@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 document.addEventListener('DOMContentLoaded', () => {
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
@@ -8,7 +10,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingSection = document.getElementById('loadingSection');
     const resultSection = document.getElementById('resultSection');
 
+    // API Key Elements
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const apiKeySection = document.getElementById('apiKeySection');
+
     let currentFile = null;
+    let genAI = null;
+
+    // Load saved API Key
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+        apiKeyInput.value = savedKey;
+        initializeGenAI(savedKey);
+    }
+
+    // Save API Key
+    saveKeyBtn.addEventListener('click', () => {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+            localStorage.setItem('gemini_api_key', key);
+            initializeGenAI(key);
+            alert('API Key saved!');
+        } else {
+            alert('Please enter a valid API Key.');
+        }
+    });
+
+    function initializeGenAI(key) {
+        try {
+            genAI = new GoogleGenerativeAI(key);
+        } catch (error) {
+            console.error("Error initializing GenAI:", error);
+            alert("Invalid API Key format.");
+        }
+    }
 
     // Drag and Drop Events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -80,35 +116,83 @@ document.addEventListener('DOMContentLoaded', () => {
         resultSection.innerHTML = '';
     });
 
+    // PDF Text Extraction
+    async function extractTextFromPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        return fullText;
+    }
+
     // Analyze button
     analyzeBtn.addEventListener('click', async () => {
         if (!currentFile) return;
+        if (!genAI) {
+            alert('Please enter and save your API Key first.');
+            apiKeyInput.focus();
+            return;
+        }
 
         loadingSection.classList.remove('hidden');
         resultSection.classList.add('hidden');
         analyzeBtn.disabled = true;
 
-        const formData = new FormData();
-        formData.append('file', currentFile);
-
         try {
-            const response = await fetch('/analyze', {
-                method: 'POST',
-                body: formData
-            });
+            const textContent = await extractTextFromPDF(currentFile);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Server Error:', errorData);
-                throw new Error(errorData.error || 'Analysis failed');
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+            const prompt = `
+            Analyze the following health report text and provide a structured analysis.
+            
+            Report Text:
+            ${textContent}
+            
+            Please provide the output in the following JSON format:
+            {
+                "symptoms": [
+                    {
+                        "symptom": "Name of symptom",
+                        "trigger_events": "From which events they might get triggered"
+                    }
+                ],
+                "chronic_disease_detected": "Name of detected chronic disease or 'None'",
+                "recommendations": {
+                    "exercise": ["List of recommended exercises"],
+                    "meditation": ["List of meditation techniques"],
+                    "yoga": ["List of yoga poses"]
+                },
+                "medicine_info": [
+                    {
+                        "name": "Medicine name",
+                        "description": "Description and why it has no side effects/harm if taken (consult specialist)"
+                    }
+                ],
+                "motivation": "Motivational message to prevent actions/events triggering the disease",
+                "warning": "A short little cute warning that I am just an AI agent and you should talk to a specialist."
             }
+            `;
 
-            const data = await response.json();
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+
+            // Clean up the response to ensure it's valid JSON
+            const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const data = JSON.parse(jsonString);
+
             renderResult(data);
 
         } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred during analysis. Please try again.');
+            alert('An error occurred during analysis. Please check your API Key and try again.');
         } finally {
             loadingSection.classList.add('hidden');
             analyzeBtn.disabled = false;

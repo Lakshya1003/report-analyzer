@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Report Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- Google Generative AI SDK -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+</head>
+
+<body>
+    <nav class="glass-nav">
+        <div class="logo">
+            <i class="fa-solid fa-heart-pulse"></i> HealthAI
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Analyzer</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Health Report <span class="highlight">Analyzer</span></h1>
+            <p>Upload your medical report for a comprehensive AI-powered analysis.</p>
+        </section>
+
+        <!-- API Key Input Section -->
+        <section class="api-key-section glass-panel" id="apiKeySection">
+            <div class="input-group">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API Key">
+                <button id="saveKeyBtn" class="primary-btn small-btn">Save Key</button>
+            </div>
+            <p class="small-text">Your key is stored locally in your browser.</p>
+        </section>
+
+        <section class="upload-section glass-panel">
+            <div class="upload-area" id="uploadArea">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h3>Drag & Drop or Click to Upload</h3>
+                <p>Supported format: PDF</p>
+                <input type="file" id="fileInput" accept=".pdf" hidden>
+            </div>
+            <div id="fileInfo" class="file-info hidden">
+                <span id="fileName">filename.pdf</span>
+                <button id="removeFile" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <button id="analyzeBtn" class="primary-btn" disabled>
+                Analyze Report
+            </button>
+        </section>
+
+        <section id="loadingSection" class="loading-section hidden">
+            <div class="loader"></div>
+            <p>Analyzing your report...</p>
+        </section>
+
+        <section id="resultSection" class="result-section hidden">
+            <!-- Dynamic Content will be injected here -->
+        </section>
+    </main>
+
+    <script type="module" src="static/script.js"></script>
+</body>
+
+</html>
